@@ -49,9 +49,9 @@ public class Cell {
         this.size = size;
     }
 
-    public Cell(int size){
+    public Cell(int size, int windowWidth, int windowHeight){
         this.size = size;
-        this.x = Math.floor(Math.random()*(500+1));
-        this.y = Math.floor(Math.random()*(500+1));
+        this.x = Math.floor(Math.random()*(windowWidth+1));
+        this.y = Math.floor(Math.random()*(windowHeight+1));
     }
 }

@@ -8,6 +8,7 @@ import javax.swing.JPanel;
 
 public class DrawBoard extends JPanel {
     CellGroup[] cellgroup;
+    int frames = 0;
     public DrawBoard(CellGroup[] cellgroup) {
         this.cellgroup = cellgroup;
 
@@ -16,7 +17,6 @@ public class DrawBoard extends JPanel {
     public void paintComponent( Graphics g) {
         super.paintComponent(g);
 
-        g.setColor(Color.green);
         for (int i = 0; i < cellgroup.length; i++) {
             CellGroup groupCells = cellgroup[i];
             Cell[] cells = groupCells.getCells();
@@ -29,6 +29,12 @@ public class DrawBoard extends JPanel {
             }
 
         }
+        g.setColor(Color.red);
+        g.drawString("FPS:"+frames, 10, 30);
+
 
     }
+   public void setFrames(int frames){
+    this.frames = frames;
+   }
 }

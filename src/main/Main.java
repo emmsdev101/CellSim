@@ -1,18 +1,23 @@
 package main;
 
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
+import java.util.Random;
 import java.awt.Button;
 import java.awt.Color;
 
 public class Main extends JFrame {
 
+    int windowWidth = 1000;
+    int windowHeight = 600;
     Button randomize = new Button("Randomize");
     Button reset = new Button("Reset");
     Button save = new Button("Save");
@@ -55,98 +60,47 @@ public class Main extends JFrame {
 
     int framerate = 60;
 
+    Thread thread1, thread2;
+
     public Main() {
-        initialize();
         setup();
+        initialize();
         run();
     }
 
     private void run() {
-        update();
+        thread1.start();
+        ;
+        thread2.start();
+        ;
+        double deltaTime = System.currentTimeMillis();
+        int frames = 0;
+
         while (true) {
-            try {
+            double timenow = System.currentTimeMillis();
+
+            if (deltaTime + (1000 / framerate) <= timenow) {
                 drawBoard.repaint();
-                Thread.sleep(1000 / framerate);
-            } catch (Exception e) {
-                // TODO: handle exception
-                e.printStackTrace();
+                update();
+                deltaTime = timenow;
+                frames++;
             }
+
         }
 
     }
 
     private void update() {
-        new Thread() {
-            public void run() {
-                while (true) {
-                    rule(greenCellGroup, greenCellGroup, greenG);
-                    rule(greenCellGroup, blueCellGroup, greenBlueG);
-                    rule(greenCellGroup, redCellGroup, greenRedG);
-                    rule(greenCellGroup, whiteCellGroup, greenWhiteG);
 
-                    try {
-                        sleep(1000/framerate);
-                    } catch (InterruptedException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }.start();
-        new Thread() {
-            public void run() {
-                while (true) {
-                    rule(blueCellGroup, blueCellGroup, blueeG);
-                    rule(blueCellGroup, greenCellGroup, blueGreenG);
-                    rule(blueCellGroup, redCellGroup, blueRedG);
-                    rule(blueCellGroup, whiteCellGroup, blueWhiteG);
-                    try {
-                        sleep(1000/framerate);
-                    } catch (InterruptedException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }.start();
-
-        new Thread() {
-            public void run() {
-                while (true) {
-                    rule(redCellGroup, redCellGroup, redG);
-                    rule(redCellGroup, blueCellGroup, redBlueG);
-                    rule(redCellGroup, greenCellGroup, redGreenG);
-                    rule(redCellGroup, whiteCellGroup, redWhiteG);
-
-                    try {
-                        sleep(1000/framerate);
-                    } catch (InterruptedException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }.start();
-        new Thread() {
-            public void run() {
-                while (true) {
-                    rule(whiteCellGroup, whiteCellGroup, whiteG);
-                    rule(whiteCellGroup, redCellGroup, whiteRedD);
-                    rule(whiteCellGroup, greenCellGroup, whiteGreenG);
-                    rule(whiteCellGroup, blueCellGroup, whiteBlueG);
-                    try {
-                        sleep(1000/framerate);
-                    } catch (InterruptedException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }.start();
+        greenCellGroup.moveCells();
+        whiteCellGroup.moveCells();
+        redCellGroup.moveCells();
+        blueCellGroup.moveCells();
     }
 
     public void rule(CellGroup cellGroupA, CellGroup cellGroupB, double attraction) {
-            Cell[] cellsA = cellGroupA.getCells();
+            if(attraction != 0){
+                Cell[] cellsA = cellGroupA.getCells();
             Cell[] cellsB = cellGroupB.getCells();
 
             double ease = 0.5;
@@ -162,42 +116,90 @@ public class Main extends JFrame {
                     cellB = cellsB[j];
 
                     // Calculating distance of cellA and cellB
-                    double dx = cellA.getX() - cellB.getX(); // dx = delta x
-                    double dy = cellA.getY() - cellB.getY(); // dy = delta y
+                    double dx = cellB.getX() - cellA.getX(); // dx = delta x
+                    double dy = cellB.getY() - cellA.getY(); // dy = delta y
                     double d = Math.sqrt((dx * dx) + (dy * dy));
 
                     if (d > 0 && d < cellGroupA.getForceRadius()) {
                         double F = (attraction * 1) / d;
-                        fx += (F * dx)*ease;
-                        fy += (F * dy)*ease;
+                        fx += F * dx;
+                        fy += F * dy;
 
                     }
+
                 }
                 cellA.setVx((cellA.getVx() + fx) * ease);
                 cellA.setVy((cellA.getVy() + fy) * ease);
 
-                cellA.setX(cellA.getX() + cellA.getVx());
-                cellA.setY(cellA.getY() + cellA.getVy());
-
-                if (cellA.getX() >= 500 || cellA.getX() <= 0)
-                    cellA.setVx(cellA.getVx() * -1);
-                if (cellA.getY() >= 500 || cellA.getY() <= 0)
-                    cellA.setVy(cellA.getVy() * -1);
+            }
             }
         
+
     }
 
     private void initialize() {
 
         initializeCells();
         randomizeRules();
+
+        thread1 = new Thread() {
+            public void run() {
+                double deltaTime = System.currentTimeMillis();
+                double firstFrameMillis = deltaTime;
+                int frames = 0;
+                while (true) {
+                    double timenow = System.currentTimeMillis();
+                    double timePassed = timenow - firstFrameMillis;
+                    if (timePassed >= 1000) {
+
+                        drawBoard.setFrames((int) (frames / (timePassed / 1000)));
+                        frames = 0;
+                        firstFrameMillis = timenow;
+                    }
+
+                    if (deltaTime + (1000 / 60) <= timenow) {
+                        rule(redCellGroup, redCellGroup, redG);
+                        rule(redCellGroup, blueCellGroup, redBlueG);
+                        rule(redCellGroup, greenCellGroup, redGreenG);
+                        rule(redCellGroup, whiteCellGroup, redWhiteG);
+                        rule(whiteCellGroup, whiteCellGroup, whiteG);
+                        rule(whiteCellGroup, redCellGroup, whiteRedD);
+                        rule(whiteCellGroup, greenCellGroup, whiteGreenG);
+                        rule(whiteCellGroup, blueCellGroup, whiteBlueG);
+                        deltaTime = timenow;
+                        frames++;
+                    }
+                }
+
+            }
+        };
+        thread2 = new Thread() {
+            public void run() {
+                double deltaTime = System.currentTimeMillis();
+                while (true) {
+                    double timenow = System.currentTimeMillis();
+                    if (deltaTime + (1000 / 60) <= timenow) {
+                        rule(greenCellGroup, greenCellGroup, greenG);
+                        rule(greenCellGroup, blueCellGroup, greenBlueG);
+                        rule(greenCellGroup, redCellGroup, greenRedG);
+                        rule(greenCellGroup, whiteCellGroup, greenWhiteG);
+                        rule(blueCellGroup, blueCellGroup, blueeG);
+                        rule(blueCellGroup, greenCellGroup, blueGreenG);
+                        rule(blueCellGroup, redCellGroup, blueRedG);
+                        rule(blueCellGroup, whiteCellGroup, blueWhiteG);
+                        deltaTime = timenow;
+                    }
+                }
+            }
+        };
     }
 
     public void initializeCells() {
-        greenCellGroup = new CellGroup(Color.green, population);
-        blueCellGroup = new CellGroup(Color.blue, population);
-        redCellGroup = new CellGroup(Color.red, population);
-        whiteCellGroup = new CellGroup(Color.white, population);
+
+        greenCellGroup = new CellGroup(Color.green, population, windowWidth, windowHeight);
+        blueCellGroup = new CellGroup(Color.blue, population, windowWidth, windowHeight);
+        redCellGroup = new CellGroup(Color.red, population, windowWidth, windowHeight);
+        whiteCellGroup = new CellGroup(Color.white, population, windowWidth, windowHeight);
 
         cellGroups[0] = greenCellGroup;
         cellGroups[1] = blueCellGroup;
@@ -212,6 +214,11 @@ public class Main extends JFrame {
         greenBlueG = randomizeG();
         greenRedG = randomizeG();
         greenWhiteG = randomizeG();
+
+        System.out.println(greenG);
+        System.out.println(greenBlueG);
+        System.out.println(greenRedG);
+        System.out.println(greenWhiteG);
 
         blueeG = randomizeG();
         blueGreenG = randomizeG();
@@ -230,16 +237,23 @@ public class Main extends JFrame {
     }
 
     public double randomizeG() {
-        if (Math.random() < 0.5) {
-            return ((Math.random() * 1) * -1);
+        Random random = new Random();
+        Random random2 = new Random(random.nextLong());
+        Random random3 = new Random(random2.nextLong());
+        Random random4 = new Random(random3.nextLong());
+        
+        if (random.nextDouble() < 0.4) return 0;
+        if (random2.nextDouble() > 0.5) {
+            return random3.nextDouble();
         }
-        return (Math.random() * 1);
+        return random4.nextDouble() * -1;
+ 
     }
 
     private void setup() {
         System.setProperty("sun.java2d.opengl", "true");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(new Dimension(500, 600));
+        setSize(new Dimension(windowWidth, windowHeight));
         setLocationRelativeTo(null);
 
         drawBoard = new DrawBoard(cellGroups);
@@ -263,8 +277,7 @@ public class Main extends JFrame {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                initializeCells();
-                randomizeRules();
+                initialize();
 
             }
 
