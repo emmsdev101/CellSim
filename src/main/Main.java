@@ -27,9 +27,9 @@ public class Main extends JFrame {
     CellGroup redCellGroup;
     CellGroup whiteCellGroup;
 
-    //  population for each CellGroup.
+    // population for each CellGroup.
     // actual population is population*4 since there are 4 CellGroup.
-    int population = 1000; 
+    int population = 1000;
     // This is used for rendering all cells
     CellGroup[] cellGroups = new CellGroup[4];
 
@@ -53,6 +53,8 @@ public class Main extends JFrame {
     double whiteRedD;
     double whiteBlueG;
 
+    int framerate = 60;
+
     public Main() {
         initialize();
         setup();
@@ -60,11 +62,11 @@ public class Main extends JFrame {
     }
 
     private void run() {
+        update();
         while (true) {
             try {
-                update();
                 drawBoard.repaint();
-                Thread.sleep(1000 / 60);
+                Thread.sleep(1000 / framerate);
             } catch (Exception e) {
                 // TODO: handle exception
                 e.printStackTrace();
@@ -72,36 +74,82 @@ public class Main extends JFrame {
         }
 
     }
+
     private void update() {
-        rule(greenCellGroup, greenCellGroup, greenG);
-        rule(greenCellGroup, blueCellGroup, greenBlueG);
-        rule(greenCellGroup, redCellGroup, greenRedG);
-        rule(greenCellGroup, whiteCellGroup, greenWhiteG);
+        new Thread() {
+            public void run() {
+                while (true) {
+                    rule(greenCellGroup, greenCellGroup, greenG);
+                    rule(greenCellGroup, blueCellGroup, greenBlueG);
+                    rule(greenCellGroup, redCellGroup, greenRedG);
+                    rule(greenCellGroup, whiteCellGroup, greenWhiteG);
 
-        rule(blueCellGroup, blueCellGroup, blueeG);
-        rule(blueCellGroup, greenCellGroup, blueGreenG);
-        rule(blueCellGroup, redCellGroup, blueRedG);
-        rule(blueCellGroup, whiteCellGroup, blueWhiteG);
+                    try {
+                        sleep(1000/framerate);
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }.start();
+        new Thread() {
+            public void run() {
+                while (true) {
+                    rule(blueCellGroup, blueCellGroup, blueeG);
+                    rule(blueCellGroup, greenCellGroup, blueGreenG);
+                    rule(blueCellGroup, redCellGroup, blueRedG);
+                    rule(blueCellGroup, whiteCellGroup, blueWhiteG);
+                    try {
+                        sleep(1000/framerate);
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }.start();
 
-        rule(redCellGroup, redCellGroup, redG);
-        rule(redCellGroup, blueCellGroup, redBlueG);
-        rule(redCellGroup, greenCellGroup, redGreenG);
-        rule(redCellGroup, whiteCellGroup, redWhiteG);
+        new Thread() {
+            public void run() {
+                while (true) {
+                    rule(redCellGroup, redCellGroup, redG);
+                    rule(redCellGroup, blueCellGroup, redBlueG);
+                    rule(redCellGroup, greenCellGroup, redGreenG);
+                    rule(redCellGroup, whiteCellGroup, redWhiteG);
 
-        rule(whiteCellGroup, whiteCellGroup, whiteG);
-        rule(whiteCellGroup, redCellGroup, whiteRedD);
-        rule(whiteCellGroup, greenCellGroup, whiteGreenG);
-        rule(whiteCellGroup, blueCellGroup, whiteBlueG);
+                    try {
+                        sleep(1000/framerate);
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }.start();
+        new Thread() {
+            public void run() {
+                while (true) {
+                    rule(whiteCellGroup, whiteCellGroup, whiteG);
+                    rule(whiteCellGroup, redCellGroup, whiteRedD);
+                    rule(whiteCellGroup, greenCellGroup, whiteGreenG);
+                    rule(whiteCellGroup, blueCellGroup, whiteBlueG);
+                    try {
+                        sleep(1000/framerate);
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }.start();
     }
 
     public void rule(CellGroup cellGroupA, CellGroup cellGroupB, double attraction) {
-        if (attraction > 0) {
             Cell[] cellsA = cellGroupA.getCells();
             Cell[] cellsB = cellGroupB.getCells();
 
-
             double ease = 0.5;
-
 
             for (int i = 0; i < cellsA.length; i++) {
                 Cell cellA = cellsA[i];
@@ -109,21 +157,19 @@ public class Main extends JFrame {
                 double fx = 0; // Attractive force on x axis
                 double fy = 0; // Attractive force on y axis
 
-
                 for (int j = 0; j < cellsB.length; j++) {
-                     
-                     cellB = cellsB[j];
+
+                    cellB = cellsB[j];
 
                     // Calculating distance of cellA and cellB
-                    double dx = cellB.getX() - cellA.getX(); // dx = delta x
-                    double dy = cellB.getY() - cellA.getY(); // dy = delta y
+                    double dx = cellA.getX() - cellB.getX(); // dx = delta x
+                    double dy = cellA.getY() - cellB.getY(); // dy = delta y
                     double d = Math.sqrt((dx * dx) + (dy * dy));
 
                     if (d > 0 && d < cellGroupA.getForceRadius()) {
                         double F = (attraction * 1) / d;
-                        fx += F * dx;
-                        fy +=  F * dy;
-
+                        fx += (F * dx)*ease;
+                        fy += (F * dy)*ease;
 
                     }
                 }
@@ -138,7 +184,7 @@ public class Main extends JFrame {
                 if (cellA.getY() >= 500 || cellA.getY() <= 0)
                     cellA.setVy(cellA.getVy() * -1);
             }
-        }
+        
     }
 
     private void initialize() {
@@ -146,6 +192,7 @@ public class Main extends JFrame {
         initializeCells();
         randomizeRules();
     }
+
     public void initializeCells() {
         greenCellGroup = new CellGroup(Color.green, population);
         blueCellGroup = new CellGroup(Color.blue, population);
@@ -190,6 +237,7 @@ public class Main extends JFrame {
     }
 
     private void setup() {
+        System.setProperty("sun.java2d.opengl", "true");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(new Dimension(500, 600));
         setLocationRelativeTo(null);
@@ -222,8 +270,6 @@ public class Main extends JFrame {
 
         });
     }
-
-
 
     public static void main(String[] args) {
         new Main();
